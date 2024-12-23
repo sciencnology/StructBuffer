@@ -59,6 +59,7 @@
     GET_FUNC_HEAD_CONST()             \
     GET_FUNC_BODY_3(_1, _2, _3)       \
     GET_FUNC_TAIL(2)
+
 #define GET_FUNC_BODY_4(_1, _2, _3, _4) \
     GET_FUNC_BODY_3(_1, _2, _3)         \
     if constexpr (3 == N)               \

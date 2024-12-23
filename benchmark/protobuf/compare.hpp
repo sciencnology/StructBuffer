@@ -109,5 +109,9 @@ namespace benchmark
             sb_obj.item_list.emplace_back(Item{10000 + i, i, 5 * i});
         }
         TestAndDisplay(pb_obj, sb_obj, "GetBagInfoRsp");
+
+        TestTuple test_tuple;
+        std::string ttt = structbuf::serializer::SaveToString(test_tuple);
+        structbuf::deserializer::ParseFromSV(test_tuple, ttt);
     }
 }

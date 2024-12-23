@@ -46,3 +46,11 @@ struct GetBagInfoRsp
     std::string msg;
     std::vector<Item> item_list;
 };
+
+struct TestTuple
+{
+    DEF_DATA_STUCT;
+    DEFINE_GET_FUNC_1(my_tup);
+
+    std::tuple<int, int, double> my_tup;
+};

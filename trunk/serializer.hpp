@@ -28,11 +28,11 @@ namespace structbuf
             {
                 return sizeof(T);
             }
-            if constexpr (trait_helper::is_one_of_v<T, std::string>)
+            else if constexpr (trait_helper::is_one_of_v<T, std::string>)
             {
                 return sizeof(size_t) + src.size();
             }
-            if constexpr (trait_helper::is_std_vector_v<T>)
+            else if constexpr (trait_helper::is_specialization_of_v<T, std::vector>)
             {
                 using value_type = T::value_type;
                 if constexpr (std::is_trivially_copyable_v<value_type>)
@@ -49,7 +49,21 @@ namespace structbuf
                     return sizeof(size_t) + elem_size;
                 }
             }
-            if constexpr (requires { T::data_struct_flag; })
+            else if constexpr (trait_helper::is_specialization_of_v<T, std::tuple>)
+            {
+                if constexpr (std::is_trivially_copyable_v<T>)
+                {
+                    return sizeof(T);
+                }
+                else
+                {
+                    size_t elem_size = std::apply([](const auto &...members)
+                                                  { return (GetSerializedSize(members) + ...); },
+                                                  src);
+                    return sizeof(size_t) + elem_size;
+                }
+            }
+            else if constexpr (requires { T::data_struct_flag; })
             {
                 if constexpr (std::is_trivially_copyable_v<T>)
                 {
@@ -98,7 +112,7 @@ namespace structbuf
          * |size|elem1|elem2|elem3|
          */
         template <typename T>
-            requires trait_helper::is_std_vector_v<T>
+            requires trait_helper::is_specialization_of_v<T, std::vector>
         constexpr char *SaveToStringVector(const T &src, char *buf)
         {
             using value_type = T::value_type;
@@ -117,6 +131,26 @@ namespace structbuf
                     elem_buf_begin = SaveToString(elem, elem_buf_begin);
                 }
 
+                size_t size = elem_buf_begin - size_buf_end;
+                std::memcpy(buf, &size, sizeof(size));
+                return elem_buf_begin;
+            }
+        }
+
+        template <typename T>
+            requires trait_helper::is_specialization_of_v<T, std::tuple>
+        constexpr char *SaveToStringTuple(const T &src, char *buf)
+        {
+            if constexpr (std::is_trivially_copyable_v<T>)
+            {
+                std::memcpy(buf, &src, sizeof(T));
+                return buf + sizeof(T);
+            }
+            else
+            {
+                char *elem_buf_begin = buf + sizeof(size_t), *size_buf_end = elem_buf_begin;
+                constexpr_for<0, std::tuple_size_v<T>>([&elem_buf_begin, &src]<size_t I>()
+                                                       { elem_buf_begin = SaveToString(std::get<I>(src), elem_buf_begin); });
                 size_t size = elem_buf_begin - size_buf_end;
                 std::memcpy(buf, &size, sizeof(size));
                 return elem_buf_begin;
@@ -154,9 +188,13 @@ namespace structbuf
             {
                 return SaveToStringString(src, buf);
             }
-            else if constexpr (trait_helper::is_std_vector_v<T>)
+            else if constexpr (trait_helper::is_specialization_of_v<T, std::vector>)
             {
                 return SaveToStringVector(src, buf);
+            }
+            else if constexpr (trait_helper::is_specialization_of_v<T, std::tuple>)
+            {
+                return SaveToStringTuple(src, buf);
             }
             else if constexpr (requires { T::data_struct_flag; })
             {

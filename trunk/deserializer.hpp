@@ -71,7 +71,7 @@ namespace structbuf
         }
 
         template <typename T>
-            requires trait_helper::is_std_vector_v<T>
+            requires trait_helper::is_specialization_of_v<T, std::vector>
         constexpr std::string_view ParseFromSVVector(T &dest, std::string_view sv)
         {
             using value_type = T::value_type;
@@ -93,6 +93,26 @@ namespace structbuf
                 }
             }
             return sv.substr(sizeof(size_t) + vec_size);
+        }
+
+        template <typename T>
+            requires trait_helper::is_specialization_of_v<T, std::tuple>
+        constexpr std::string_view ParseFromSVTuple(T &dest, std::string_view sv)
+        {
+            if constexpr (std::is_trivially_copyable_v<T>)
+            {
+                std::memcpy(&dest, sv.data(), sizeof(T));
+                return sv.substr(sizeof(T));
+            }
+            else
+            {
+                size_t total_size = 0;
+                std::memcpy(&total_size, sv.data(), sizeof(size_t));
+                std::string_view data_sv = sv.substr(sizeof(size_t), total_size);
+                constexpr_for<0, std::tuple_size_v<T>>([&dest, &data_sv]<size_t I>()
+                                                       { data_sv = InnerParseFromSV(std::get<I>(dest), data_sv); });
+                return sv.substr(sizeof(size_t) + total_size);
+            }
         }
 
         template <typename T>
@@ -126,9 +146,13 @@ namespace structbuf
             {
                 return ParseFromSVString(dest, sv);
             }
-            else if constexpr (trait_helper::is_std_vector_v<T>)
+            else if constexpr (trait_helper::is_specialization_of_v<T, std::vector>)
             {
                 return ParseFromSVVector(dest, sv);
+            }
+            else if constexpr (trait_helper::is_specialization_of_v<T, std::tuple>)
+            {
+                return ParseFromSVTuple(dest, sv);
             }
             else if constexpr (requires { T::data_struct_flag; })
             {

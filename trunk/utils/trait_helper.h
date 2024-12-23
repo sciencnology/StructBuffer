@@ -9,17 +9,20 @@ namespace structbuf
         template <typename T, typename... Types>
         inline constexpr bool is_one_of_v = (std::is_same_v<T, Types> || ...);
 
-        template <typename T>
-        struct is_std_vector : std::false_type
+        // 通用模板：默认不是模板的实例
+        template <typename, template <typename...> class>
+        struct is_specialization_of : std::false_type
         {
         };
 
-        template <typename T, typename Alloc>
-        struct is_std_vector<std::vector<T, Alloc>> : std::true_type
+        // 偏特化：当类型是指定模板的实例时
+        template <typename... Args, template <typename...> class Template>
+        struct is_specialization_of<Template<Args...>, Template> : std::true_type
         {
         };
 
-        template <typename T>
-        inline constexpr bool is_std_vector_v = is_std_vector<T>::value;
+        // 辅助变量模板（C++17 起）
+        template <typename T, template <typename...> class Template>
+        inline constexpr bool is_specialization_of_v = is_specialization_of<T, Template>::value;
     }
 }

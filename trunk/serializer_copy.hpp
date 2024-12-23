@@ -38,7 +38,7 @@ namespace structbuf
         }
 
         template <typename T>
-            requires trait_helper::is_std_vector_v<T>
+            requires trait_helper::is_specialization_of_v<T, std::vector>
         std::string SaveToStringVector(const T &src)
         {
             using value_type = T::value_type;
@@ -100,7 +100,7 @@ namespace structbuf
             {
                 return SaveToStringString(src);
             }
-            if constexpr (trait_helper::is_std_vector_v<T>)
+            if constexpr (trait_helper::is_specialization_of_v<T, std::vector>)
             {
                 return SaveToStringVector(src);
             }
