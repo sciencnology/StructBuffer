@@ -6,7 +6,7 @@ template <typename Callback>
 class TimerRaii
 {
 public:
-    TimerRaii(Callback callback)
+    TimerRaii(Callback&& callback)
         : start_time_(std::chrono::high_resolution_clock::now()), callback_(callback) {}
 
     ~TimerRaii()

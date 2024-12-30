@@ -19,7 +19,7 @@ namespace structbuf
         constexpr char *SaveToString(const T &src, char *buf);
 
         /**
-         * @brief 计算一个合法可序列化变量序列化后大小，用于序列化时分配指定大小的string
+         * @brief 计算一个合法可序列化变量序列化后大小，用于序列化时预分配指定大小的string
          */
         template <typename T>
         constexpr size_t GetSerializedSize(const T &src)
@@ -31,6 +31,10 @@ namespace structbuf
             else if constexpr (trait_helper::is_one_of_v<T, std::string>)
             {
                 return sizeof(size_t) + src.size();
+            }
+            else if constexpr (trait_helper::is_c_string_v<T>)
+            {
+                return sizeof(size_t) + std::strlen(src);
             }
             else if constexpr (trait_helper::is_specialization_of_v<T, std::vector>)
             {
@@ -103,6 +107,20 @@ namespace structbuf
             size_t size = src.size();
             std::memcpy(buf, &size, sizeof(size));
             std::memcpy(buf + sizeof(size), src.data(), size);
+            return buf + GetSerializedSize(src);
+        }
+
+        /**
+         * @brief 对C风格字符串类型进行序列化
+         * @note 仅针对将某个字符串字面量序列化到std::string的情况，不允许在StructBuffer自定义结构体中使用C风格字符串类型
+        */
+        template <typename T>
+            requires trait_helper::is_c_string_v<T>
+        constexpr char *SaveToStringCString(const T &src, char *buf)
+        {
+            size_t size = std::strlen(src);
+            std::memcpy(buf, &size, sizeof(size));
+            std::memcpy(buf + sizeof(size), src, size);
             return buf + GetSerializedSize(src);
         }
 
@@ -187,6 +205,10 @@ namespace structbuf
             else if constexpr (trait_helper::is_one_of_v<T, std::string>)
             {
                 return SaveToStringString(src, buf);
+            }
+            else if constexpr (trait_helper::is_c_string_v<T>)
+            {
+                return SaveToStringCString(src, buf);
             }
             else if constexpr (trait_helper::is_specialization_of_v<T, std::vector>)
             {
