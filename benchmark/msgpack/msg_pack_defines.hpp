@@ -6,10 +6,11 @@
 
 namespace msg_pack_benchmark
 {
-    struct BigVectorOfInts
+    struct BigVectorOfNumerics
     {
-        MSGPACK_DEFINE(int_list);
+        MSGPACK_DEFINE(double_list, int_list);
 
+        std::vector<double> double_list;
         std::vector<int32_t> int_list;
     };
 

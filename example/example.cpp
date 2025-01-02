@@ -2,7 +2,9 @@
 #include <cassert>
 
 // g++ example.cpp -g --std=c++2b
-
+/**
+ * @brief: 传入任意一个对象，对其进行序列化和反序列化操作，并检查数据是否一致
+*/
 void TestOneStruct(auto& origin_obj) {
     std::string serialized_str = structbuf::serializer::SaveToString(origin_obj);
     std::decay_t<decltype(origin_obj)> dest_obj;
@@ -25,4 +27,7 @@ int main() {
 
     TemplatedCommonStruct<int, double, std::tuple<float, std::string>, NestedStruct> templated {{42, 1.198, {0.10, "teststring"}, nested}};
     TestOneStruct(templated);
+
+    std::tuple<double, std::string, std::vector<std::vector<int>>> std_container {{3.14}, "teststring2", {{1}, {2}}};
+    TestOneStruct(std_container);
 }

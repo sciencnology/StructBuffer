@@ -1,16 +1,13 @@
 syntax = "proto3";
 package proto;
 
-message BigVectorOfInts {
-  repeated int32 int_list = 1;
+message BigVectorOfNumerics {
+  repeated double double_list = 1;
+  repeated int32 int_list = 2;
 }
 
-message BigStrings {
-    repeated bytes str_list = 1;
-}
-
-message VectorOfBigString {
-    repeated string str_list = 1;
+message BigString {
+    bytes str = 1;
 }
 
 message Item {
@@ -21,6 +18,21 @@ message Item {
 
 message GetBagInfoRsp {
     int32 retcode = 1;
-    string msg = 2;
-    repeated Item item_list = 3;
+    repeated Item item_list = 2;
+}
+
+
+message ComplicatedContainer {
+    message ComplicatedItem {
+        message InnerItem {
+            double mem1 = 1;
+            float mem2 = 2;
+            uint64 mem3 = 3;
+        }
+        int32 mem1 = 1;
+        double mem2 = 2;
+        bytes mem3 = 3;
+        InnerItem mem4 = 4;
+    }
+    repeated ComplicatedItem mem_list = 1;
 }

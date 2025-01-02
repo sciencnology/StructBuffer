@@ -1,14 +1,15 @@
 #pragma once
-#include "struct_buffer.hpp"
+#include "../struct_buffer.hpp"
 
 #include <vector>
 
 namespace struct_rpc_benchmark
 {
-    struct BigVectorOfInts
+    struct BigVectorOfNumerics
     {
-        DEFINE_STRUCT_BUFFER_MEMBERS(int_list);
+        DEFINE_STRUCT_BUFFER_MEMBERS(double_list, int_list);
 
+        std::vector<double> double_list;
         std::vector<int32_t> int_list;
     };
 
@@ -35,6 +36,7 @@ namespace struct_rpc_benchmark
         int32_t ext = 0;
     };
 
+    // 模拟游戏开发中拉取玩家背包的数据包
     struct GetBagInfoRsp
     {
         DEFINE_STRUCT_BUFFER_MEMBERS(retcode, item_list);
