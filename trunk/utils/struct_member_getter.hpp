@@ -16,6 +16,9 @@ namespace structbuf
             return !std::is_same_v<flag_classes::MemberEnd, std::remove_reference_t<ReturnType>>;
         }
 
+        /**
+         * @brief: 对于使用DEFINE_STRUCT_BUFFER_MEMBERS定义所有成员变量的类，编译期获取其成员变量数量
+        */
         template <typename T, size_t N = 0>
         constexpr auto member_count()
         {

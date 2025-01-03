@@ -2,6 +2,9 @@
 #include <iostream>
 #include <chrono>
 
+/**
+ * @brief: 泛型的计时类，生命周期结束时自动统计毫秒级时间差，并调用注册的回调函数
+*/
 template <typename Callback>
 class TimerRaii
 {

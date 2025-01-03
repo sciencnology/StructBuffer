@@ -6,6 +6,13 @@ namespace structbuf
 {
     namespace trait_helper
     {
+        /**
+         * @brief: 提供了几个自定义类型萃取
+         * * is_one_of_v<T,U,V,W,...> 判断T是否为后面几种类型之一
+         * * is_specialization_of_v<T,Template> 判断T是否为指定模板类型Template的某个实例
+         * * is_c_string_v<T> 判断T是否为C风格字符串
+        */
+
         template <typename T, typename... Types>
         inline constexpr bool is_one_of_v = (std::is_same_v<T, Types> || ...);
 
@@ -21,7 +28,7 @@ namespace structbuf
         {
         };
 
-        // 辅助变量模板（C++17 起）
+        // 辅助变量模板
         template <typename T, template <typename...> class Template>
         inline constexpr bool is_specialization_of_v = is_specialization_of<T, Template>::value;
 
@@ -44,7 +51,7 @@ namespace structbuf
         template <std::size_t N>
         struct is_c_string<char[N]> : std::true_type {};
 
-        // 辅助变量模板（C++17）
+        // 辅助变量模板
         template <typename T>
         constexpr bool is_c_string_v = is_c_string<T>::value;
     }

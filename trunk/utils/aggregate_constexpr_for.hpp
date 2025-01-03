@@ -6,13 +6,22 @@ namespace structbuf
 {
 namespace aggregate_utils
 {
+/**
+ * @brief: 定义一个能够隐式转换为任何类型的Any类
+*/
 struct Any {
   template <typename T> operator T();
 };
 
+/**
+ * @brief: 递归定义不同继承层级的tag类，用于函数重载决议
+*/
 template <size_t N> struct tag : tag<N - 1> {};
 template <> struct tag<0> {};
 
+/**
+ * 以下64个size_函数通过SFINAE尝试对某个aggregate的类型T进行构造，并返回能构造的最大成员数量即T的非静态数据成员数量
+*/
 template <typename T>
 constexpr auto size_(tag<64>) -> decltype(T{Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}, Any{}}, 0u) {
   return 64u;
@@ -274,14 +283,20 @@ constexpr auto size_(tag<0>) -> decltype(T{}, 0u) {
   return 0u;
 }
 
-template <typename T> constexpr size_t size() { return size_<T>(tag<4>{}); }
+template <typename T> 
+constexpr size_t size() { return size_<T>(tag<64>{}); }
 
+/**
+ * @brief: 对args中的每一个参数调用一次f
+*/
 template <typename F, typename... Args>
 void expand_args(F&& f, Args&&... args) {
     (f(std::forward<Args>(args)), ...);
 }
 
-
+/**
+ * @brief: 首先调用size<T>()得到T的成员变量数量，随后用对应数量的结构化绑定拿到每个成员变量的引用，并使用expand_args将其展开给函数f
+*/
 template <typename T, typename F> 
 void constexpr_for(T &v, F&& f) {
   if constexpr (size<T>() == 64u) {
