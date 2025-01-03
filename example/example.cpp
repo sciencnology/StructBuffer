@@ -2,6 +2,7 @@
 #include <cassert>
 
 // g++ example.cpp -g --std=c++2b
+
 /**
  * @brief: 传入任意一个对象，对其进行序列化和反序列化操作，并检查数据是否一致
 */
@@ -13,21 +14,21 @@ void TestOneStruct(auto& origin_obj) {
 }
 
 int main() {
+    // 可以直接序列化标准库容器对象
+    std::vector<std::string> std_vec {"he", "llo", "wor", "ld"};
+    TestOneStruct(std_vec);
+
+    // 序列化自定义类型
     SimpleStruct simple {42, 3.14};
     TestOneStruct(simple);
 
-    StringsStruct strings {"this is a string", "this is another string"};
-    TestOneStruct(strings);
+    ComplicatedStruct complicated {{1,2,3}, {"hello","world"}, {simple,simple,simple}, {1.23,simple,{4.56}}};
+    TestOneStruct(complicated);
 
-    VectorStruct vectors {{1,2,3,114514}, {simple,simple,simple,simple}};
-    TestOneStruct(vectors);
-
-    NestedStruct nested {simple, strings, vectors};
-    TestOneStruct(nested);
-
-    TemplatedCommonStruct<int, double, std::tuple<float, std::string>, NestedStruct> templated {{42, 1.198, {0.10, "teststring"}, nested}};
+    TemplatedNestedStruct<int, int> templated {simple, complicated, {8,8}};
     TestOneStruct(templated);
 
-    std::tuple<double, std::string, std::vector<std::vector<int>>> std_container {{3.14}, "teststring2", {{1}, {2}}};
-    TestOneStruct(std_container);
+    NonAggregateStruct non_aggregate(1, 2.0);
+    TestOneStruct(non_aggregate);
+    return 0;
 }

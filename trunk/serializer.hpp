@@ -7,6 +7,7 @@
 #include "utils/constexpr_for.hpp"
 #include "utils/struct_member_getter.hpp"
 #include "utils/flag_classes.h"
+#include "utils/aggregate_constexpr_for.hpp"
 namespace structbuf
 {
     namespace serializer
@@ -64,6 +65,19 @@ namespace structbuf
                     size_t elem_size = std::apply([](const auto &...members)
                                                   { return (GetSerializedSize(members) + ...); },
                                                   src);
+                    return sizeof(size_t) + elem_size;
+                }
+            }
+            else if constexpr (std::is_aggregate_v<T>) 
+            {
+                if constexpr (std::is_trivially_copyable_v<T>)
+                {
+                    return sizeof(T);
+                }
+                else
+                {
+                    size_t elem_size = 0;
+                    aggregate_utils::constexpr_for(src, [&elem_size, &src](auto&& v){ elem_size += GetSerializedSize(v); });
                     return sizeof(size_t) + elem_size;
                 }
             }
@@ -175,6 +189,27 @@ namespace structbuf
             }
         }
 
+
+        template <typename T>
+            requires std::is_aggregate_v<T>
+        constexpr char *SaveToStringAggregate(const T &src, char *buf)
+        {
+            if constexpr (std::is_trivially_copyable_v<T>)
+            {
+                std::memcpy(buf, &src, sizeof(T));
+                return buf + sizeof(T);
+            }
+            else
+            {
+                char *elem_buf_begin = buf + sizeof(size_t), *size_buf_end = elem_buf_begin;
+                aggregate_utils::constexpr_for(src, [&elem_buf_begin, &src](auto&& v)
+                                                       { elem_buf_begin = SaveToString(v, elem_buf_begin); });
+                size_t size = elem_buf_begin - size_buf_end;
+                std::memcpy(buf, &size, sizeof(size));
+                return elem_buf_begin;
+            }
+        }
+
         template <typename T>
             requires requires { T::data_struct_flag; }
         constexpr char *SaveToStringStruct(const T &src, char *buf)
@@ -217,6 +252,10 @@ namespace structbuf
             else if constexpr (trait_helper::is_specialization_of_v<T, std::tuple>)
             {
                 return SaveToStringTuple(src, buf);
+            }
+            else if constexpr (std::is_aggregate_v<T>)
+            {
+                return SaveToStringAggregate(src, buf);
             }
             else if constexpr (requires { T::data_struct_flag; })
             {

@@ -8,11 +8,15 @@
 #include "utils/constexpr_for.hpp"
 #include "utils/struct_member_getter.hpp"
 #include "utils/flag_classes.h"
+#include "utils/aggregate_constexpr_for.hpp"
 
 namespace structbuf
 {
     namespace deserializer
     {
+        /**
+         * @brief 接收一个代表某不定长结构编码结果的string_view，可以解析其每个组成部分
+        */
         struct SVParser
         {
             std::string_view sv;
@@ -52,7 +56,7 @@ namespace structbuf
         constexpr std::string_view InnerParseFromSV(T &dest, std::string_view sv);
 
         template <typename T>
-            requires std::is_arithmetic_v<T>
+            requires std::is_arithmetic_v<std::decay_t<T>>
         constexpr std::string_view ParseFromSVNumeric(T &dest, std::string_view sv)
         {
             std::memcpy(&dest, sv.data(), sizeof(T));
@@ -60,7 +64,7 @@ namespace structbuf
         }
 
         template <typename T>
-            requires trait_helper::is_one_of_v<T, std::string>
+            requires trait_helper::is_one_of_v<std::decay_t<T>, std::string>
         constexpr std::string_view ParseFromSVString(T &dest, std::string_view sv)
         {
             size_t str_size = 0;
@@ -71,7 +75,7 @@ namespace structbuf
         }
 
         template <typename T>
-            requires trait_helper::is_specialization_of_v<T, std::vector>
+            requires trait_helper::is_specialization_of_v<std::decay_t<T>, std::vector>
         constexpr std::string_view ParseFromSVVector(T &dest, std::string_view sv)
         {
             using value_type = T::value_type;
@@ -96,7 +100,7 @@ namespace structbuf
         }
 
         template <typename T>
-            requires trait_helper::is_specialization_of_v<T, std::tuple>
+            requires trait_helper::is_specialization_of_v<std::decay_t<T>, std::tuple>
         constexpr std::string_view ParseFromSVTuple(T &dest, std::string_view sv)
         {
             if constexpr (std::is_trivially_copyable_v<T>)
@@ -112,6 +116,27 @@ namespace structbuf
                 constexpr_for<0, std::tuple_size_v<T>>([&dest, &data_sv]<size_t I>()
                                                        { data_sv = InnerParseFromSV(std::get<I>(dest), data_sv); });
                 return sv.substr(sizeof(size_t) + total_size);
+            }
+        }
+
+        template <typename T>
+            requires std::is_aggregate_v<std::decay_t<T>>
+        constexpr std::string_view ParseFromSVAggregate(T &dest, std::string_view sv)
+        {
+            if constexpr (std::is_trivially_copyable_v<T>)
+            {
+                std::memcpy(&dest, sv.data(), sizeof(T));
+                return sv.substr(sizeof(T));
+            }
+            else
+            {
+                size_t struct_size = 0;
+                std::memcpy(&struct_size, sv.data(), sizeof(size_t));
+                std::string_view data_sv = sv.substr(sizeof(size_t), struct_size);
+
+                aggregate_utils::constexpr_for(dest, [&dest, &data_sv](auto&& v) { data_sv = InnerParseFromSV(v, data_sv); });
+
+                return sv.substr(sizeof(size_t) + struct_size);
             }
         }
 
@@ -138,21 +163,25 @@ namespace structbuf
         template <typename T>
         constexpr std::string_view InnerParseFromSV(T &dest, std::string_view sv)
         {
-            if constexpr (std::is_arithmetic_v<T>)
+            if constexpr (std::is_arithmetic_v<std::decay_t<T>>)
             {
                 return ParseFromSVNumeric(dest, sv);
             }
-            else if constexpr (trait_helper::is_one_of_v<T, std::string>)
+            else if constexpr (trait_helper::is_one_of_v<std::decay_t<T>, std::string>)
             {
                 return ParseFromSVString(dest, sv);
             }
-            else if constexpr (trait_helper::is_specialization_of_v<T, std::vector>)
+            else if constexpr (trait_helper::is_specialization_of_v<std::decay_t<T>, std::vector>)
             {
                 return ParseFromSVVector(dest, sv);
             }
-            else if constexpr (trait_helper::is_specialization_of_v<T, std::tuple>)
+            else if constexpr (trait_helper::is_specialization_of_v<std::decay_t<T>, std::tuple>)
             {
                 return ParseFromSVTuple(dest, sv);
+            }
+            else if constexpr (std::is_aggregate_v<std::decay_t<T>>)
+            {
+                return ParseFromSVAggregate(dest, sv);
             }
             else if constexpr (requires { T::data_struct_flag; })
             {
