@@ -28,7 +28,7 @@ namespace structbuf
             }
             constexpr std::string_view GetNext()
             {
-                if (End())
+                if (End()) [[unlikely]]
                 {
                     return "";
                 }
