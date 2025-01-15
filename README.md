@@ -33,8 +33,8 @@ struct MyStruct {
 };
 
 int main() {
-	MyStruct test{1, "teststring"}, test2;
-	std::string serialized_str = structbuf::serializer::SaveToString(test); // 序列化为string
+    MyStruct test{1, "teststring"}, test2;
+    std::string serialized_str = structbuf::serializer::SaveToString(test); // 序列化为string
     structbuf::deserializer::ParseFromSV(test2, serialized_str);    // 从string_view反序列化为对象
 }
 ```
@@ -160,7 +160,7 @@ int main() {
 p.s. 模拟用户背包的结构体构造了游戏开发中序列化用户背包的场景，其定义如下
 
 ```c++
-	struct Item
+    struct Item
     {
         int32_t uuid = 0;
         int32_t cnt = 0;
