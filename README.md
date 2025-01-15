@@ -46,10 +46,10 @@ int main() {
 
 * 首先定义所有需要序列化的类型，也可以直接序列化合法的标准库类型
 目前已支持的非自定义类型：
-* 全部数值类型（不同位数的整型、无符号整型、浮点型等）
-* std::string
-* std::vector
-* std::tuple
+	* 全部数值类型（不同位数的整型、无符号整型、浮点型等）
+	* std::string
+	* std::vector
+	* std::tuple
 
 ```c++
 // struct_deines.hpp
