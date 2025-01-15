@@ -18,9 +18,31 @@
 * 本项目为header-only实现，且不依赖任何其他第三方库，直接在代码中`#include "StructBuffer/struct_buffer.hpp"`​即可使用
 * C++语言标准：C++20。开发和测试使用的编译器版本为gcc13.2。理论上使用gcc10及以上的版本即可编译，参考https://en.cppreference.com/w/cpp/compiler_support/20
 
+## QuickStart
+
+最简单的使用示例
+
+```c++
+#pragma once
+#include "../struct_buffer.hpp"
+#include <string>
+
+struct MyStruct {
+	int id;
+	std::string name;
+};
+
+int main() {
+	MyStruct test{1, "teststring"}, test2;
+	std::string serialized_str = structbuf::serializer::SaveToString(test); // 序列化为string
+    structbuf::deserializer::ParseFromSV(test2, serialized_str);    // 从string_view反序列化为对象
+}
+```
 ‍
 
 ## Examples
+
+更多使用示例
 
 * 首先定义所有需要序列化的类型，也可以直接序列化合法的标准库类型
 目前已支持的非自定义类型：
